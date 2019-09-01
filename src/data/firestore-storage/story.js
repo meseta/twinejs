@@ -1,12 +1,11 @@
 /*
 Functions for moving stories in and out of firebase
 */
-const deepcopy = require('deepcopy')
+const deepcopy = require('deepcopy');
 
 let { createStory } = require('../actions/story');
 let { passageDefaults, storyDefaults } = require('../store/story');
 
-//let commaList = require('./comma-list');
 const firebase = require('firebase/app');
 
 require('firebase/firestore');
@@ -17,13 +16,14 @@ const story = module.exports = {
 	Saves a story to firebase
 	*/
 
-	saveStory(story) {
-		if (!story.id) {
+	saveStory(storyOrig) {
+		if (!storyOrig.id) {
 			throw new Error('Story has no id');
 		}
 
 		// deep copy to remove passages
-		let storyCopy = deepcopy(story);
+		let storyCopy = deepcopy(storyOrig);
+		
 		delete storyCopy.passages;
 
 		return firebase.firestore().collection('twine').doc('default').collection('stories').doc(story.id).set(storyCopy)
