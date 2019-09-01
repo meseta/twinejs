@@ -31,7 +31,8 @@ module.exports = Vue.extend({
 		oldWindowTitle: '',
 		userPassageName: '',
 		saveError: '',
-		origin: null
+		origin: null,
+		lastSaved: new Date()
 	}),
 
 	computed: {
@@ -72,7 +73,7 @@ module.exports = Vue.extend({
 					passage.id !== this.passage.id
 			));
 		},
-		
+
 		autocompletions() {
 			return this.parentStory.passages.map(passage => passage.name);
 		}
@@ -133,11 +134,14 @@ module.exports = Vue.extend({
 		},
 
 		saveText(text) {
-			this.updatePassage(
-				this.parentStory.id,
-				this.passage.id,
-				{ text: text }
-			);
+			// save at maximum once every 20 seconds
+			let nowTime = new Date();
+			let diff = (nowTime - this.lastSaved) / 1000;
+
+			if (diff > 20) {
+				this.updatePassage(this.parentStory.id, this.passage.id, { text: text });
+				this.lastSaved = nowTime;
+			}
 		},
 
 		saveTags(tags) {
@@ -149,6 +153,8 @@ module.exports = Vue.extend({
 		},
 
 		dialogDestroyed() {
+			// save on close
+			this.updatePassage(this.parentStory.id, this.passage.id, { action: "destroyed" });
 			this.$destroy();
 		},
 

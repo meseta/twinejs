@@ -17,6 +17,7 @@ module.exports = new Vuex.Store({
 	},
 
 	plugins: [
-		isElectron() ? require('../file-system') : require('../local-storage')
+		//isElectron() ? require('../file-system') : require('../local-storage')
+		require('../firestore-storage')
 	]
 });
