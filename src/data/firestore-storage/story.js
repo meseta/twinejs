@@ -1,9 +1,11 @@
 /*
 Functions for moving stories in and out of firebase
 */
+const deepcopy = require('deepcopy')
 
 let { createStory } = require('../actions/story');
 let { passageDefaults, storyDefaults } = require('../store/story');
+
 //let commaList = require('./comma-list');
 const firebase = require('firebase/app');
 
@@ -12,26 +14,7 @@ require('firebase/firestore');
 
 const story = module.exports = {
 	/*
-	A wrapper for a series of save/delete operations. This takes a function as
-	argument that will receive an object keeping track of the transaction. This
-	function should then make save and delete calls as necessary, passing the
-	provided transaction object as their first argument.
-	*/
-	//
-	// update(func) {
-	// 	let transaction = {
-	// 		storyIds: window.localStorage.getItem('twine-stories') || '',
-	// 		passageIds: window.localStorage.getItem('twine-passages') || ''
-	// 	};
-	//
-	// 	func(transaction);
-	//
-	// 	window.localStorage.setItem('twine-stories', transaction.storyIds);
-	// 	window.localStorage.setItem('twine-passages', transaction.passageIds);
-	// },
-
-	/*
-	Saves a story to local storage. This does *not* affect any child passages.
+	Saves a story to firebase
 	*/
 
 	saveStory(story) {
@@ -39,29 +22,33 @@ const story = module.exports = {
 			throw new Error('Story has no id');
 		}
 
-		return firebase.firestore().collection('twine').doc('default').collection('stories').doc(story.id).set(story)
+		// deep copy to remove passages
+		let storyCopy = deepcopy(story);
+		delete storyCopy.passages;
+
+		return firebase.firestore().collection('twine').doc('default').collection('stories').doc(story.id).set(storyCopy)
 		.then(() => {
 			console.log("Story saved");
 		}).catch(err => {
 			console.error(`Story could not be saved: ${err}`);
 		});
 	},
-	//
-	// /*
-	// Deletes a story from local storage. This does *not* affect any child
-	// passages. You *must* delete child passages manually.
-	// */
-	//
-	// deleteStory(transaction, story) {
-	// 	if (!story.id) {
-	// 		throw new Error('Story has no id');
-	// 	}
-	//
-	// 	transaction.storyIds = commaList.remove(transaction.storyIds, story.id);
-	// 	window.localStorage.removeItem('twine-stories-' + story.id);
-	// },
-	//
-	// /* Saves a passage to local storage. */
+
+	deleteStoryById(storyId) {
+		if (!storyId) {
+			throw new Error('Story has no id');
+		}
+
+		return firebase.firestore().collection('twine').doc('default')
+															 .collection('stories').doc(storyId).delete()
+ 		.then(() => {
+ 			console.log("Story deleted");
+ 		}).catch(err => {
+ 			console.error(`Story could not be deleted: ${err}`);
+ 		});
+	},
+
+	/* Saves a passage. */
 
 	savePassage(storyId, passage) {
 		if (!passage.id) {
@@ -78,25 +65,18 @@ const story = module.exports = {
 		});
 	},
 
-	// /* Deletes a passage from local storage. */
-	//
-	// deletePassage(transaction, passage) {
-	// 	if (!passage.id) {
-	// 		throw new Error('Passage has no id');
-	// 	}
-	//
-	// 	story.deletePassageById(transaction, passage.id);
-	// },
-	//
-	// /* Deletes a passage from local storage. */
-	//
-	// deletePassageById(transaction, id) {
-	// 	transaction.passageIds = commaList.remove(
-	// 		transaction.passageIds,
-	// 		id
-	// 	);
-	// 	window.localStorage.removeItem('twine-passages-' + id);
-	// },
+	/* Deletes a passage from local storage. */
+
+	deletePassageById(storyId, passageId) {
+		return firebase.firestore().collection('twine').doc('default')
+															 .collection('stories').doc(storyId)
+															 .collection('passages').doc(passageId).delete()
+		.then(() => {
+			console.log("Passage deleted");
+		}).catch(err => {
+			console.error(`Passage could not be deleted: ${err}`);
+		});
+	},
 
 	load(store) {
 

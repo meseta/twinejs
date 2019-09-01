@@ -50,63 +50,42 @@ module.exports = store => {
 				);
 				break;
 
-	// 		case 'DUPLICATE_STORY':
-	// 			story.update(transaction => {
-	// 				const dupe = state.story.stories.find(
-	// 					s => s.name === mutation.payload[1]
-	// 				);
-	//
-	// 				story.saveStory(transaction, dupe);
-	//
-	// 				dupe.passages.forEach(
-	// 					passage => story.savePassage(transaction, passage)
-	// 				);
-	// 			});
-	// 			break;
-	//
-	// 		case 'IMPORT_STORY':
-	// 			story.update(transaction => {
-	// 				const imported = state.story.stories.find(
-	// 					s => s.name === mutation.payload[0].name
-	// 				);
-	//
-	// 				story.saveStory(transaction, imported);
-	//
-	// 				imported.passages.forEach(
-	// 					passage => story.savePassage(transaction, passage)
-	// 				);
-	// 			});
-	// 			break;
-	//
-	// 		case 'DELETE_STORY': {
-	// 			/*
-	// 			We have to use our last copy of the stories array, because
-	// 			by now the deleted story is gone from the state.
-	// 			*/
-	//
-	// 			const toDelete = previousStories.find(
-	// 				s => s.id === mutation.payload[0]
-	// 			);
-	//
-	// 			story.update(transaction => {
-	// 				/*
-	// 				It's our responsibility to delete child passages first.
-	// 				*/
-	//
-	// 				toDelete.passages.forEach(
-	// 					passage => story.deletePassage(transaction, passage)
-	// 				);
-	//
-	// 				story.deleteStory(transaction, toDelete);
-	// 			});
-	// 			break;
-	// 		}
-	//
-	// 		/*
-	// 		When saving a passage, we have to make sure to save its parent
-	// 		story too, since its lastUpdate property has changed.
-	// 		*/
-	//
+			case 'DUPLICATE_STORY': {
+				const dupe = state.story.stories.find(
+					s => s.name === mutation.payload[1]
+				);
+
+				story.saveStory(dupe);
+
+				dupe.passages.forEach(
+					passage => story.savePassage(dupe.id, passage)
+				);
+				break;
+			}
+
+			case 'IMPORT_STORY': {
+				const imported = state.story.stories.find(
+					s => s.name === mutation.payload[0].name
+				);
+
+				story.saveStory(imported);
+
+				imported.passages.forEach(
+					passage => story.savePassage(imported.id, passage)
+				);
+				break;
+			}
+
+			case 'DELETE_STORY': {
+				story.deleteStoryById(mutation.payload[0]);
+				break;
+			}
+
+			/*
+			When saving a passage, we have to make sure to save its parent
+			story too, since its lastUpdate property has changed.
+			*/
+
 			case 'CREATE_PASSAGE_IN_STORY': {
 				const parentStory = state.story.stories.find(
 					s => s.id === mutation.payload[0]
@@ -115,6 +94,7 @@ module.exports = store => {
 					p => p.name === mutation.payload[1].name
 				);
 
+				story.saveStory(parentStory);
 				story.savePassage(parentStory.id, passage);
 				break;
 			}
@@ -130,7 +110,7 @@ module.exports = store => {
 					return;
 				}
 
-				// if it's text update, don't save unless it's been a certain amount of time
+				// if it's text update, only update after time passed
 				let nowTime = new Date();
 				let diffTime = (nowTime - lastSaved)/1000;
 
@@ -153,23 +133,14 @@ module.exports = store => {
 				break;
 			}
 
-	// 		case 'DELETE_PASSAGE_IN_STORY': {
-	// 			const parentStory = state.story.stories.find(
-	// 				s => s.id === mutation.payload[0]
-	// 			);
-	//
-	// 			/*
-	// 			We can't dig up the passage in question right now, because
-	// 			previousStories is only a shallow copy, and it's gone there at
-	// 			this point in time.
-	// 			*/
-	//
-	// 			story.update(transaction => {
-	// 				story.saveStory(transaction, parentStory);
-	// 				story.deletePassageById(transaction, mutation.payload[1]);
-	// 			});
-	// 			break;
-	// 		}
+			case 'DELETE_PASSAGE_IN_STORY': {
+				const parentStory = state.story.stories.find(
+					s => s.id === mutation.payload[0]
+				);
+
+				story.deletePassageById(parentStory.id, mutation.payload[1]);
+				break;
+			}
 
 			case 'UPDATE_PREF':
 				pref.save(mutation.payload);
