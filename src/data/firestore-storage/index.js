@@ -16,6 +16,9 @@ firebase.initializeApp(config);
 
 let enabled = true;
 let previousStories;
+let lastSaved = new Date();
+let lastPassage = 0;
+const saveTime = 20; // the amount of time before saving
 
 module.exports = store => {
 	enabled = false;
@@ -117,16 +120,36 @@ module.exports = store => {
 			}
 
 			case 'UPDATE_PASSAGE_IN_STORY': {
-				if (Object.keys(mutation.payload[2]).some(key => key !== 'selected')) {
-					const parentStory = state.story.stories.find(
-						s => s.id === mutation.payload[0]
-					);
-					const passage = parentStory.passages.find(
-						p => p.id === mutation.payload[1]
-					);
+				// this sub gets called a _lot_ so the following are various
+				// filters to reduce how much we push to the database
 
-					story.savePassage(parentStory.id, passage);
+				let props = Object.keys(mutation.payload[2]);
+
+				// selection/deselection shouldn't cause a save
+				if (props.some(key => key === 'selected')) {
+					return;
 				}
+
+				// if it's text update, don't save unless it's been a certain amount of time
+				let nowTime = new Date();
+				let diffTime = (nowTime - lastSaved)/1000;
+
+				if (props.some(key => key === 'text') && diffTime > saveTime) {
+					return;
+				}
+
+				// now for every other kind of prop, save
+				const parentStory = state.story.stories.find(
+					s => s.id === mutation.payload[0]
+				);
+				const passage = parentStory.passages.find(
+					p => p.id === mutation.payload[1]
+				);
+
+				story.savePassage(parentStory.id, passage);
+				lastSaved = nowTime;
+				lastPassage = mutation.payload[1];
+
 				break;
 			}
 

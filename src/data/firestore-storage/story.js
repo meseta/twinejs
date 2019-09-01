@@ -118,15 +118,8 @@ const story = module.exports = {
 					}
 				});
 
-				/* Coerce the lastUpdate property to a date. */
-				if (newStory.lastUpdate) {
-					newStory.lastUpdate = new Date(
-						Date.parse(newStory.lastUpdate)
-					);
-				}
-				else {
-					newStory.lastUpdate = new Date();
-				}
+				/* set the lastUpdate property to a date. */
+				newStory.lastUpdate = newStory.lastUpdate.toDate();
 
 				/*
 				Force the passages property to be an empty array -- we'll
