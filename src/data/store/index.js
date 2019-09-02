@@ -13,7 +13,8 @@ module.exports = new Vuex.Store({
 		appInfo: require('./app-info'),
 		pref: require('./pref'),
 		story: require('./story'),
-		storyFormat: require('./story-format')
+		storyFormat: require('./story-format'),
+		auth: require('./auth')
 	},
 
 	plugins: [

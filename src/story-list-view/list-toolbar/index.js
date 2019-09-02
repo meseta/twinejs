@@ -10,6 +10,7 @@ const locale = require('../../locale');
 const {prompt} = require('../../dialogs/prompt');
 const {publishArchive} = require('../../data/publish');
 const saveFile = require('../../file/save');
+const { logout } = require('../../data/actions/auth.js');
 
 module.exports = Vue.extend({
 	template: require('./index.html'),
@@ -88,6 +89,11 @@ module.exports = Vue.extend({
 
 		showLocale() {
 			window.location.hash = 'locale';
+		},
+
+		doLogout() {
+			this.logout();
+			window.location.hash = '#login';
 		}
 	},
 
@@ -98,7 +104,8 @@ module.exports = Vue.extend({
 
 	vuex: {
 		actions: {
-			createStory
+			createStory,
+			logout
 		},
 
 		getters: {

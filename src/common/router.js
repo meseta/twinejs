@@ -6,7 +6,8 @@ const LocaleView = require('../locale/view');
 const StoryEditView = require('../story-edit-view');
 const StoryListView = require('../story-list-view');
 const WelcomeView = require('../welcome');
-const locale = require('../locale'); 
+const LoginView = require('../login');
+const locale = require('../locale');
 const { getStoryPlayHtml, getStoryProofingHtml, getStoryTestHtml } = require('./story-html');
 const replaceUI = require('../ui/replace');
 const store = require('../data/store');
@@ -24,6 +25,10 @@ TwineRouter.map({
 
 	'/welcome': {
 		component: WelcomeView
+	},
+
+	'/login': {
+		component: LoginView
 	},
 
 	/*
@@ -176,6 +181,17 @@ TwineRouter.beforeEach(transition => {
 			transition.to.params.previouslyEditing = editingId[1];
 		}
 	}
+	
+	/*
+	login check
+	*/
+
+	if (transition.to.path === '/login' || store.state.auth.loggedIn) {
+		transition.next();
+	}
+	else {
+		transition.redirect('/login');
+	}
 
 	/*
 	If the user has never used the app before, point them to the welcome view
@@ -183,14 +199,14 @@ TwineRouter.beforeEach(transition => {
 	or redirect() will stop any other logic in the function.
 	*/
 
-	const welcomeSeen = store.state.pref.welcomeSeen;
-
-	if (transition.to.path === '/welcome' || welcomeSeen) {
-		transition.next();
-	}
-	else {
-		transition.redirect('/welcome');
-	}
+	// const welcomeSeen = store.state.pref.welcomeSeen;
+	//
+	// if (transition.to.path === '/welcome' || welcomeSeen) {
+	// 	transition.next();
+	// }
+	// else {
+	// 	transition.redirect('/welcome');
+	// }
 });
 
 module.exports = TwineRouter;

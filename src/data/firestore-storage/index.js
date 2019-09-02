@@ -12,20 +12,17 @@ const firebase = require('firebase/app');
 
 require('firebase/firestore');
 
-firebase.initializeApp(config);
+if (!firebase.apps.length) {
+	firebase.initializeApp(config);
+}
 
 let enabled = true;
-let previousStories;
 let lastSaved = new Date();
-let lastPassage = 0;
 const saveTime = 20; // the amount of time before saving
 
 module.exports = store => {
 	enabled = false;
-	pref.load(store);
-	story.load(store);
 	storyFormat.load(store);
-	previousStories = store.state.story.stories;
 	enabled = true;
 
 	store.subscribe((mutation, state) => {
@@ -33,9 +30,25 @@ module.exports = store => {
 			return;
 		}
 
+
+		if (!state.auth.loggedIn) {
+			switch (mutation.type) {
+				case 'CREATE_FORMAT':
+				case 'UPDATE_FORMAT':
+				case 'DELETE_FORMAT':
+					storyFormat.save(store);
+					break;
+			}
+			return;
+		}
+
+
+
 		switch (mutation.type) {
+
 			case 'CREATE_STORY':
 				story.saveStory(
+					state.auth.uid,
 					state.story.stories.find(
 						s => s.name === mutation.payload[0].name
 					)
@@ -44,6 +57,7 @@ module.exports = store => {
 
 			case 'UPDATE_STORY':
 				story.saveStory(
+					state.auth.uid,
 					state.story.stories.find(
 						s => s.id === mutation.payload[0]
 					)
@@ -55,10 +69,10 @@ module.exports = store => {
 					s => s.name === mutation.payload[1]
 				);
 
-				story.saveStory(dupe);
+				story.saveStory(state.auth.uid, dupe);
 
 				dupe.passages.forEach(
-					passage => story.savePassage(dupe.id, passage)
+					passage => story.savePassage(state.auth.uid, dupe.id, passage)
 				);
 				break;
 			}
@@ -68,16 +82,16 @@ module.exports = store => {
 					s => s.name === mutation.payload[0].name
 				);
 
-				story.saveStory(imported);
+				story.saveStory(state.auth.uid, imported);
 
 				imported.passages.forEach(
-					passage => story.savePassage(imported.id, passage)
+					passage => story.savePassage(state.auth.uid, imported.id, passage)
 				);
 				break;
 			}
 
 			case 'DELETE_STORY': {
-				story.deleteStoryById(mutation.payload[0]);
+				story.deleteStoryById(state.auth.uid, mutation.payload[0]);
 				break;
 			}
 
@@ -94,8 +108,8 @@ module.exports = store => {
 					p => p.name === mutation.payload[1].name
 				);
 
-				story.saveStory(parentStory);
-				story.savePassage(parentStory.id, passage);
+				story.saveStory(state.auth.uid, parentStory);
+				story.savePassage(state.auth.uid, parentStory.id, passage);
 				break;
 			}
 
@@ -126,7 +140,7 @@ module.exports = store => {
 					p => p.id === mutation.payload[1]
 				);
 
-				story.savePassage(parentStory.id, passage);
+				story.savePassage(state.auth.uid, parentStory.id, passage);
 				lastSaved = nowTime;
 				lastPassage = mutation.payload[1];
 
@@ -138,12 +152,12 @@ module.exports = store => {
 					s => s.id === mutation.payload[0]
 				);
 
-				story.deletePassageById(parentStory.id, mutation.payload[1]);
+				story.deletePassageById(state.auth.uid, parentStory.id, mutation.payload[1]);
 				break;
 			}
 
 			case 'UPDATE_PREF':
-				pref.save(mutation.payload);
+				pref.save(state.auth.uid, mutation.payload);
 				break;
 
 			case 'CREATE_FORMAT':
@@ -156,16 +170,17 @@ module.exports = store => {
 				/* This change doesn't need to be persisted. */
 				break;
 
+			case 'LOGIN':
+			case 'LOGOUT':
+			case 'SYNC':
+				pref.load(state.auth.uid, store);
+				story.load(state.auth.uid, store);
+				break;
+
 			default:
 				throw new Error(
 					`Don't know how to handle mutation ${mutation.type}`
 				);
 		}
-
-		/*
-		We save a copy of the stories structure in aid of deleting, as above.
-		*/
-
-		previousStories = state.story.stories;
 	});
 };

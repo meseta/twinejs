@@ -16,17 +16,17 @@ const story = module.exports = {
 	Saves a story to firebase
 	*/
 
-	saveStory(storyOrig) {
+	saveStory(userId, storyOrig) {
 		if (!storyOrig.id) {
 			throw new Error('Story has no id');
 		}
 
 		// deep copy to remove passages
 		let storyCopy = deepcopy(storyOrig);
-		
+
 		delete storyCopy.passages;
 
-		return firebase.firestore().collection('twine').doc('default').collection('stories').doc(story.id).set(storyCopy)
+		return firebase.firestore().collection('twine').doc(userId).collection('stories').doc(storyOrig.id).set(storyCopy)
 		.then(() => {
 			console.log("Story saved");
 		}).catch(err => {
@@ -34,12 +34,12 @@ const story = module.exports = {
 		});
 	},
 
-	deleteStoryById(storyId) {
+	deleteStoryById(userId, storyId) {
 		if (!storyId) {
 			throw new Error('Story has no id');
 		}
 
-		return firebase.firestore().collection('twine').doc('default')
+		return firebase.firestore().collection('twine').doc(userId)
 															 .collection('stories').doc(storyId).delete()
  		.then(() => {
  			console.log("Story deleted");
@@ -50,12 +50,12 @@ const story = module.exports = {
 
 	/* Saves a passage. */
 
-	savePassage(storyId, passage) {
+	savePassage(userId, storyId, passage) {
 		if (!passage.id) {
 			throw new Error('Passage has no id');
 		}
 
-		return firebase.firestore().collection('twine').doc('default')
+		return firebase.firestore().collection('twine').doc(userId)
 															 .collection('stories').doc(storyId)
 															 .collection('passages').doc(passage.id).set(passage)
 		.then(() => {
@@ -67,8 +67,8 @@ const story = module.exports = {
 
 	/* Deletes a passage from local storage. */
 
-	deletePassageById(storyId, passageId) {
-		return firebase.firestore().collection('twine').doc('default')
+	deletePassageById(userId, storyId, passageId) {
+		return firebase.firestore().collection('twine').doc(userId)
 															 .collection('stories').doc(storyId)
 															 .collection('passages').doc(passageId).delete()
 		.then(() => {
@@ -78,9 +78,9 @@ const story = module.exports = {
 		});
 	},
 
-	load(store) {
+	load(userId, store) {
 
-		return firebase.firestore().collection('twine').doc('default').collection('stories').get()
+		return firebase.firestore().collection('twine').doc(userId).collection('stories').get()
 		.then(stories => {
 			if (stories.empty) {
 				return;
@@ -108,8 +108,8 @@ const story = module.exports = {
 				newStory.passages = [];
 
 				promises.push(
-					firebase.firestore().collection('twine').doc('default')
-																					.collection('stories').doc(doc.id)
+					firebase.firestore().collection('twine').doc(userId)
+																					.collection('stories').doc(newStory.id)
 																					.collection('passages').get()
 					.then(passages => {
 						if (passages.empty) {

@@ -1,0 +1,27 @@
+@import '../common/metrics.less';
+
+#loginView {
+	> div {
+		padding-left: 220px;
+		width: 45rem;
+		margin: 2 * @len-extra-large auto;
+		min-height: 220px;
+		position: relative;
+
+		&:before {
+			content: '';
+			display: block;
+			position: absolute;
+			top: 0;
+			left: 0;
+			width: 200px;
+			bottom: 0;
+			background-position: center;
+			background-repeat: no-repeat;
+		}
+	}
+	
+	.buttons .skip {
+		padding-left: 1em;
+	}
+}

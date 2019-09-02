@@ -1,0 +1,21 @@
+<div id="loginView">
+	<div class="login">
+		<form @submit.prevent="doLogin">
+			<h1>Log In</h1>
+
+			<p class="error" v-if="loginErrorFlag" transition="fade-in-out">
+				{{ loginError }}
+			</p>
+
+			<p>
+				Username <input type="text" required v-model="username" v-el:username><br />
+				Password <input type="password" required v-model="password" v-el:password>
+			</p>
+
+			<p class="buttons">
+				<button class="primary" type="submit">Login</button>
+			</p>
+		</form>
+	</div> <!-- .login -->
+
+</div>

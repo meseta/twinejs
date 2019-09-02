@@ -6,8 +6,8 @@ const firebase = require('firebase/app');
 require('firebase/firestore');
 
 module.exports = {
-	saveAll(store) { // saves the entire store/prefs
-		return firebase.firestore().collection('twine').doc('default').set(store.state.pref)
+	saveAll(userId, store) { // saves the entire store/prefs
+		return firebase.firestore().collection('twine').doc(userId).set(store.state.pref)
 		.then(() => {
 			console.log("Preferences saved");
 		}).catch(err => {
@@ -15,8 +15,8 @@ module.exports = {
 		});
 	},
 
-	save(payload) {
-		return firebase.firestore().collection('twine').doc('default').set({
+	save(userId, payload) {
+		return firebase.firestore().collection('twine').doc(userId).set({
 			[payload[0]]: payload[1]
 		}, {merge: true})
 		.then(() => {
@@ -26,8 +26,8 @@ module.exports = {
 		});
 	},
 
-	load(store) {
-		return firebase.firestore().collection('twine').doc('default').get()
+	load(userId, store) {
+		return firebase.firestore().collection('twine').doc(userId).get()
 		.then(doc => {
 			console.log("Preferences loaded");
 			if (!doc.exists) {
